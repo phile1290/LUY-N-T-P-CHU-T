@@ -80,15 +80,14 @@
 </head>
 <body>
 
-    <!-- SOUND TOGGLE -->
-    <div class="absolute top-4 right-4 z-[100]">
-        <button class="sound-btn glass-card px-6 py-3 rounded-full text-cyan-300 font-bold border-cyan-500/50 hover:bg-cyan-900/50 transition-colors cursor-pointer text-sm shadow-[0_0_15px_rgba(34,211,238,0.3)]" onclick="SoundSystem.toggleMusic()">
-            🔇 Nhạc: Tắt
-        </button>
-    </div>
-
     <!-- HOME SCREEN -->
     <div id="home-screen" class="screen active relative w-full h-full font-sans flex flex-col">
+        <!-- SOUND TOGGLE -->
+        <div class="absolute top-4 right-4 z-[100]">
+            <button class="sound-btn glass-card px-6 py-3 rounded-full text-cyan-300 font-bold border-cyan-500/50 hover:bg-cyan-900/50 transition-colors cursor-pointer text-sm shadow-[0_0_15px_rgba(34,211,238,0.3)]" onclick="SoundSystem.toggleMusic()">
+                🔇 Nhạc: Tắt
+            </button>
+        </div>
         <!-- AI Brain Background Decorative SVG -->
         <div class="absolute inset-0 flex justify-center items-center opacity-20 pointer-events-none z-0">
             <svg viewBox="0 0 800 600" class="w-full h-full max-w-5xl drop-shadow-[0_0_30px_#22d3ee]">
@@ -227,7 +226,7 @@
             }
 
             function playTone(freq, type, duration, vol) {
-                if (!enabled || !ctx) return;
+                if (!ctx) return;
                 const osc = ctx.createOscillator();
                 const gain = ctx.createGain();
                 osc.type = type;
@@ -267,23 +266,23 @@
                 timeoutId = setTimeout(scheduleBGM, 50);
             }
 
-            function toggleMusic(forcePlay) {
+            function toggleMusic() {
                 init();
-                if (forcePlay && !isPlaying && enabled) {
+                enabled = !enabled;
+                if (enabled) {
+                    playBGM();
+                } else {
+                    stopBGM();
+                }
+                updateBtn();
+            }
+
+            function playBGM() {
+                if (!enabled) return;
+                if (!isPlaying) {
                     isPlaying = true;
                     nextNoteTime = ctx.currentTime + 0.1;
                     scheduleBGM();
-                } else if (!forcePlay) {
-                    enabled = !enabled;
-                    if (enabled) {
-                        isPlaying = true;
-                        nextNoteTime = ctx.currentTime + 0.1;
-                        scheduleBGM();
-                    } else {
-                        isPlaying = false;
-                        clearTimeout(timeoutId);
-                    }
-                    updateBtn();
                 }
             }
 
@@ -304,7 +303,7 @@
                 });
             }
 
-            return { init, playScore, playError, playWin, playLose, toggleMusic, stopBGM };
+            return { init, playScore, playError, playWin, playLose, toggleMusic, playBGM, stopBGM };
         })();
 
         // --- LEVEL CONFIGURATION ---
@@ -344,7 +343,7 @@
         // --- CORE GAME LOGIC ---
         function startGame(mode) {
             SoundSystem.init();
-            SoundSystem.toggleMusic(true);
+            SoundSystem.playBGM();
             currentLevel = parseInt(document.getElementById('level').value);
             score = 0;
             penalty = 0;
@@ -507,9 +506,9 @@
             // Tọa độ X ngẫu nhiên
             const x = Math.max(0, Math.floor(Math.random() * maxX));
             
-            // Ký tự ngẫu nhiên từ A-Z
-            const charCode = 65 + Math.floor(Math.random() * 26);
-            const char = String.fromCharCode(charCode);
+            // Ký tự ngẫu nhiên từ A-Z và 0-9
+            const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+            const char = chars[Math.floor(Math.random() * chars.length)];
             
             el.textContent = char;
             el.style.width = size + 'px';
@@ -541,7 +540,7 @@
             if (!isPlaying || activeMode !== 'keyboard') return;
             
             const key = e.key.toUpperCase();
-            if (/^[A-Z]$/.test(key)) {
+            if (/^[A-Z0-9]$/.test(key)) {
                 // Lấy tất cả mục tiêu trên màn hình chưa bị phá hủy
                 const targets = Array.from(document.querySelectorAll('.key-target:not(.hit)'));
                 
