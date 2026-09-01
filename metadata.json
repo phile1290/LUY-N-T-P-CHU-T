@@ -1,0 +1,6 @@
+{
+  "name": "Bé Học Máy Tính",
+  "description": "Ứng dụng rèn luyện kỹ năng sử dụng chuột và bàn phím cho học sinh lớp 1.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

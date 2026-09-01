@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vui Học Máy Tính - Lớp 1</title>
+    <meta name="description" content="Ứng dụng rèn luyện kỹ năng sử dụng chuột và bàn phím cho học sinh tiểu học." />
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+    <style>
+        /* --- CSS STYLES --- */
+        * { box-sizing: border-box; }
+        body { 
+            margin: 0; 
+            height: 100vh; 
+            display: flex; 
+            flex-direction: column; 
+            overflow: hidden; 
+            font-family: 'Segoe UI', Tahoma, Geneva, sans-serif; 
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #312e81 100%); 
+            user-select: none; 
+        }
+        
+        .screen {
+            display: none;
+            width: 100%;
+            height: 100%;
+            flex-direction: column;
+            align-items: center;
+        }
+        .screen.active {
+            display: flex;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+        .floating { animation: float 3s ease-in-out infinite; }
+        
+        .glass-card { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .text-glow { text-shadow: 0 0 15px rgba(255, 255, 255, 0.5); }
+        
+        select option { color: #000; font-weight: bold; }
+        
+        /* Game Targets */
+        .mouse-target {
+            position: absolute;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: pointer;
+            box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.2s;
+            border: 4px solid rgba(255,255,255,0.5);
+        }
+        .key-target {
+            position: absolute;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+            border: 4px solid rgba(255,255,255,0.2);
+            font-weight: 900;
+            border-radius: 12px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.4);
+            border-bottom: 4px solid rgba(0,0,0,0.3);
+            transition: transform 0.1s, opacity 0.15s;
+        }
+        .hit {
+            transform: scale(1.6) rotate(10deg);
+            opacity: 0;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- HOME SCREEN -->
+    <div id="home-screen" class="screen active relative w-full h-full font-sans flex flex-col">
+        <div class="flex-grow flex flex-col items-center justify-center gap-12 mt-10">
+            <div class="text-center floating">
+                <h1 class="text-4xl sm:text-7xl font-black text-white mb-2 text-glow uppercase">Vui Học Máy Tính</h1>
+                <p class="text-indigo-300 tracking-widest uppercase text-sm font-bold">Chinh phục thử thách Click & Type</p>
+            </div>
+            
+            <div class="flex flex-col items-center gap-8 glass-card p-10 rounded-[40px] z-10 mx-4">
+                <div class="flex flex-col items-center gap-4">
+                    <label for="level" class="text-white/60 uppercase text-[10px] font-bold tracking-[0.3em]">Chọn cấp độ của bạn</label>
+                    <select id="level" class="bg-indigo-600/30 text-white font-bold text-xl px-6 py-3 rounded-xl border-2 border-indigo-500/50 outline-none hover:bg-indigo-600/50 cursor-pointer">
+                        <!-- Populated by JS -->
+                    </select>
+                </div>
+                
+                <div class="flex gap-6 mt-4 flex-wrap justify-center">
+                    <button class="group flex flex-col items-center gap-4 p-8 rounded-3xl bg-indigo-600/20 border-2 border-indigo-500/50 hover:bg-indigo-600/40 transition-all cursor-pointer" onclick="startGame('mouse')">
+                        <div class="w-24 h-24 rounded-full bg-indigo-500 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="white"><path d="M13 1.07V9h7c0-4.08-3.05-7.44-7-7.93M4 15c0 4.42 3.58 8 8 8s8-3.58 8-8v-4H4v4m7-13.93C7.05 1.56 4 4.92 4 9h7V1.07Z"/></svg>
+                        </div>
+                        <span class="text-xl font-bold text-white uppercase tracking-tighter">Luyện Chuột</span>
+                    </button>
+                    
+                    <button class="group flex flex-col items-center gap-4 p-8 rounded-3xl bg-fuchsia-600/20 border-2 border-fuchsia-500/50 hover:bg-fuchsia-600/40 transition-all cursor-pointer" onclick="startGame('keyboard')">
+                        <div class="w-24 h-24 rounded-full bg-fuchsia-500 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="white"><path d="M20 5H4c-1.1 0-1.99.9-1.99 2L2 17c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2m-9 3h2v2h-2V8m0 3h2v2h-2v-2m-3-3h2v2H8V8m0 3h2v2H8v-2m-1 2H5v-2h2v2m0-3H5V8h2v2m9 7H8v-2h8v2m3-4h-2v-2h2v2m0-3h-2V8h2v2Z"/></svg>
+                        </div>
+                        <span class="text-xl font-bold text-white uppercase tracking-tighter">Luyện Phím</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <footer class="h-12 w-full px-8 flex items-center justify-between text-[10px] text-indigo-400 font-bold uppercase tracking-[0.2em] opacity-50 mt-auto">
+            <span>© 2024 EDUCATIONAL GAMING SYSTEMS</span>
+            <span>V.1.0.4 - READY FOR LAUNCH</span>
+        </footer>
+    </div>
+
+    <!-- GAME SCREEN -->
+    <div id="game-screen" class="screen w-full h-full flex-col font-sans">
+        <header class="w-full h-20 px-4 sm:px-8 flex items-center justify-between glass-card z-50">
+            <div class="flex items-center gap-6">
+                <div class="text-indigo-300 font-black text-2xl tracking-tighter hidden sm:block">
+                    <span class="text-white text-glow">GALAXY</span> ACADEMY
+                </div>
+                <div class="h-8 w-[1px] bg-white/20 hidden sm:block"></div>
+                <div class="flex flex-col">
+                    <span class="text-[10px] text-indigo-400 uppercase tracking-widest font-bold">Cấp độ</span>
+                    <span id="lbl-level" class="text-xl text-white font-mono leading-none">1</span>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-6 sm:gap-12">
+                <div class="flex flex-col items-center">
+                    <span class="text-[10px] text-indigo-400 uppercase tracking-widest font-bold">Điểm số</span>
+                    <span id="lbl-score" class="text-2xl text-yellow-400 font-mono leading-none">0</span>
+                </div>
+                <div class="flex flex-col items-center">
+                    <span class="text-[10px] text-red-400 uppercase tracking-widest font-bold">Mạng</span>
+                    <span class="text-xl text-red-400 font-mono leading-none"><span id="lbl-lives">3</span> ❤️</span>
+                </div>
+            </div>
+
+            <button class="px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-white text-sm font-semibold border border-white/10 transition-colors cursor-pointer" onclick="exitGame()">
+                THOÁT
+            </button>
+        </header>
+        
+        <div id="playzone" class="flex-grow w-full relative overflow-hidden bg-transparent"></div>
+    </div>
+
+    <script>
+        // --- LEVEL CONFIGURATION ---
+        // Ma trận 10 cấp độ cấu hình tĩnh
+        const levelMatrix = [];
+        for (let i = 1; i <= 10; i++) {
+            levelMatrix.push({
+                level: i,
+                // Giảm dần từ 4000ms (Level 1) đến 1000ms (Level 10)
+                spawnRate: Math.round(4000 - ((i - 1) * (3000 / 9))),
+                // Giảm kích thước từ 100px (Level 1) xuống 40px (Level 10)
+                targetSize: Math.round(100 - ((i - 1) * (60 / 9))),
+                // Tốc độ rơi giảm dần từ 8s (Level 1) xuống 2.5s (Level 10)
+                fallSpeed: 8 - ((i - 1) * (5.5 / 9))
+            });
+        }
+
+        // --- GLOBAL VARIABLES ---
+        let currentLevel = 1;
+        let score = 0;
+        let lives = 3;
+        let activeMode = '';
+        let spawnTimer = null;
+        let isPlaying = false;
+
+        // --- INITIALIZATION ---
+        window.onload = () => {
+            const select = document.getElementById('level');
+            levelMatrix.forEach(config => {
+                const opt = document.createElement('option');
+                opt.value = config.level;
+                opt.textContent = 'Cấp độ ' + config.level;
+                select.appendChild(opt);
+            });
+        };
+
+        // --- CORE GAME LOGIC ---
+        function startGame(mode) {
+            currentLevel = parseInt(document.getElementById('level').value);
+            score = 0;
+            lives = 3;
+            activeMode = mode;
+            isPlaying = true;
+            
+            updateHUD();
+            
+            document.getElementById('home-screen').classList.remove('active');
+            document.getElementById('game-screen').classList.add('active');
+            document.getElementById('playzone').innerHTML = '';
+            
+            scheduleNextSpawn();
+        }
+
+        function exitGame() {
+            isPlaying = false;
+            clearTimeout(spawnTimer);
+            document.getElementById('game-screen').classList.remove('active');
+            document.getElementById('home-screen').classList.add('active');
+            document.getElementById('playzone').innerHTML = ''; // Xóa hết mục tiêu
+        }
+
+        function updateHUD() {
+            document.getElementById('lbl-level').textContent = currentLevel;
+            document.getElementById('lbl-score').textContent = score;
+            document.getElementById('lbl-lives').textContent = lives;
+        }
+
+        function loseLife() {
+            if (!isPlaying) return;
+            lives--;
+            updateHUD();
+            if (lives <= 0) {
+                alert('Trò chơi kết thúc! Điểm của bé là: ' + score);
+                exitGame();
+            }
+        }
+        
+        function addScore() {
+            score += 10;
+            // Tự động lên cấp mỗi 100 điểm
+            if (score % 100 === 0 && currentLevel < 10) {
+                currentLevel++;
+                document.getElementById('level').value = currentLevel; // Update dropdown state too
+            }
+            updateHUD();
+        }
+
+        function scheduleNextSpawn() {
+            if (!isPlaying) return;
+            const config = levelMatrix[currentLevel - 1];
+            
+            if (activeMode === 'mouse') {
+                spawnMouseTarget(config);
+            } else {
+                spawnKeyTarget(config);
+            }
+            
+            spawnTimer = setTimeout(scheduleNextSpawn, config.spawnRate);
+        }
+
+        // --- MOUSE GAME LOGIC ---
+        function spawnMouseTarget(config) {
+            const zone = document.getElementById('playzone');
+            const el = document.createElement('div');
+            el.className = 'mouse-target';
+            
+            const size = config.targetSize;
+            const maxX = zone.clientWidth - size;
+            const maxY = zone.clientHeight - size;
+            
+            // Tọa độ (x,y) ngẫu nhiên
+            const x = Math.max(0, Math.floor(Math.random() * maxX));
+            const y = Math.max(0, Math.floor(Math.random() * maxY));
+            
+            el.style.width = size + 'px';
+            el.style.height = size + 'px';
+            el.style.left = x + 'px';
+            el.style.top = y + 'px';
+            
+            // Màu sắc rực rỡ ngẫu nhiên
+            const colors = ['#FF1744', '#D500F9', '#00E5FF', '#76FF03', '#FFEA00', '#FF9100'];
+            el.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+            
+            // Xử lý sự kiện click
+            el.onmousedown = () => {
+                if (el.classList.contains('hit')) return;
+                el.classList.add('hit');
+                addScore();
+                
+                // Gỡ bỏ element sau khi chạy xong animation
+                setTimeout(() => { if (el.parentNode) el.remove(); }, 200);
+            };
+            
+            zone.appendChild(el);
+            
+            // Tự động biến mất và trừ mạng nếu không click kịp
+            setTimeout(() => {
+                if (el.parentNode && !el.classList.contains('hit')) {
+                    el.remove();
+                    loseLife();
+                }
+            }, config.spawnRate * 2.5); 
+        }
+
+        // --- KEYBOARD GAME LOGIC ---
+        function spawnKeyTarget(config) {
+            const zone = document.getElementById('playzone');
+            const el = document.createElement('div');
+            el.className = 'key-target';
+            
+            const size = config.targetSize;
+            const maxX = zone.clientWidth - size;
+            
+            // Tọa độ X ngẫu nhiên
+            const x = Math.max(0, Math.floor(Math.random() * maxX));
+            
+            // Ký tự ngẫu nhiên từ A-Z
+            const charCode = 65 + Math.floor(Math.random() * 26);
+            const char = String.fromCharCode(charCode);
+            
+            el.textContent = char;
+            el.style.width = size + 'px';
+            el.style.height = size + 'px';
+            el.style.left = x + 'px';
+            el.style.top = '-' + size + 'px'; // Bắt đầu ở trên cùng ngoài màn hình
+            el.style.fontSize = Math.max(20, size * 0.6) + 'px'; // Kích thước chữ tỷ lệ với khối
+            
+            zone.appendChild(el);
+            
+            // Ép trình duyệt tính toán lại Layout để kích hoạt Transition
+            void el.offsetWidth;
+            
+            // Thiết lập Animation rơi
+            el.style.transition = `top ${config.fallSpeed}s linear`;
+            el.style.top = zone.clientHeight + 'px'; // Rơi xuống đáy Playzone
+            
+            // Kiểm tra khi rơi chạm đáy màn hình
+            el.addEventListener('transitionend', (e) => {
+                if (e.propertyName === 'top' && el.parentNode) {
+                    el.remove();
+                    loseLife();
+                }
+            });
+        }
+
+        // Lắng nghe sự kiện gõ phím
+        window.addEventListener('keydown', (e) => {
+            if (!isPlaying || activeMode !== 'keyboard') return;
+            
+            const key = e.key.toUpperCase();
+            if (/^[A-Z]$/.test(key)) {
+                // Lấy tất cả mục tiêu trên màn hình chưa bị phá hủy
+                const targets = Array.from(document.querySelectorAll('.key-target:not(.hit)'));
+                
+                // Tìm mục tiêu rơi thấp nhất (top lớn nhất) có ký tự khớp
+                const match = targets
+                    .filter(t => t.textContent === key)
+                    .sort((a, b) => {
+                        const aTop = parseFloat(a.style.top) || 0;
+                        const bTop = parseFloat(b.style.top) || 0;
+                        return bTop - aTop;
+                    })[0];
+                    
+                if (match) {
+                    match.classList.add('hit');
+                    addScore();
+                    setTimeout(() => { if (match.parentNode) match.remove(); }, 150);
+                }
+            }
+        });
+    </script>
+</body>
+</html>
