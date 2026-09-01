@@ -17,11 +17,11 @@
             flex-direction: column; 
             overflow: hidden; 
             font-family: 'Segoe UI', Tahoma, Geneva, sans-serif; 
-            background-color: #0f172a;
+            background-color: #083344;
             background-image: 
-                radial-gradient(circle at 50% 100%, rgba(99, 102, 241, 0.4) 0%, transparent 60%),
-                url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cdefs%3E%3Cpattern id='grid' width='40' height='40' patternUnits='userSpaceOnUse'%3E%3Cpath d='M 40 0 L 0 0 0 40' fill='none' stroke='rgba(255, 255, 255, 0.05)' stroke-width='1'/%3E%3C/pattern%3E%3C/defs%3E%3Crect width='100%25' height='100%25' fill='url(%23grid)'/%3E%3Ccircle cx='50' cy='50' r='2' fill='%23fff' opacity='0.8'/%3E%3Ccircle cx='150' cy='250' r='1' fill='%23fff' opacity='0.5'/%3E%3Ccircle cx='300' cy='100' r='1.5' fill='%23fff' opacity='0.6'/%3E%3Ccircle cx='250' cy='350' r='2' fill='%23fff' opacity='0.9'/%3E%3Ccircle cx='80' cy='300' r='1' fill='%23fff' opacity='0.7'/%3E%3Ccircle cx='350' cy='200' r='2' fill='%23fff' opacity='0.4'/%3E%3C/svg%3E"),
-                linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #312e81 100%);
+                radial-gradient(circle at 50% 50%, rgba(34, 211, 238, 0.3) 0%, transparent 70%),
+                url("data:image/svg+xml,%3Csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M 0 50 L 100 50 M 50 0 L 50 100' stroke='rgba(34, 211, 238, 0.05)' stroke-width='2'/%3E%3Ccircle cx='50' cy='50' r='3' fill='rgba(34, 211, 238, 0.2)'/%3E%3C/svg%3E"),
+                linear-gradient(135deg, #082f49 0%, #022c22 100%);
             user-select: none; 
         }
         
@@ -52,22 +52,23 @@
             position: absolute;
             border-radius: 50%;
             display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: pointer;
-            box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+            background: radial-gradient(circle at center, #cffafe 0%, #06b6d4 100%);
+            box-shadow: 0 0 20px #22d3ee, inset 0 0 10px #fff;
             transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.2s;
-            border: 4px solid rgba(255,255,255,0.5);
+            border: 2px solid #fff;
         }
         .key-target {
             position: absolute;
             display: flex;
             justify-content: center;
             align-items: center;
-            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
-            color: white;
-            border: 4px solid rgba(255,255,255,0.2);
+            background: linear-gradient(135deg, #0891b2 0%, #164e63 100%);
+            color: #cffafe;
+            border: 2px solid #22d3ee;
             font-weight: 900;
             border-radius: 12px;
-            box-shadow: 0 8px 16px rgba(0,0,0,0.4);
-            border-bottom: 4px solid rgba(0,0,0,0.3);
+            box-shadow: 0 0 20px #0891b2;
+            text-shadow: 0 0 10px #fff;
             transition: transform 0.1s, opacity 0.15s;
         }
         .hit {
@@ -79,32 +80,67 @@
 </head>
 <body>
 
+    <!-- SOUND TOGGLE -->
+    <div class="absolute top-4 right-4 z-[100]">
+        <button class="sound-btn glass-card px-6 py-3 rounded-full text-cyan-300 font-bold border-cyan-500/50 hover:bg-cyan-900/50 transition-colors cursor-pointer text-sm shadow-[0_0_15px_rgba(34,211,238,0.3)]" onclick="SoundSystem.toggleMusic()">
+            🔇 Nhạc: Tắt
+        </button>
+    </div>
+
     <!-- HOME SCREEN -->
     <div id="home-screen" class="screen active relative w-full h-full font-sans flex flex-col">
+        <!-- AI Brain Background Decorative SVG -->
+        <div class="absolute inset-0 flex justify-center items-center opacity-20 pointer-events-none z-0">
+            <svg viewBox="0 0 800 600" class="w-full h-full max-w-5xl drop-shadow-[0_0_30px_#22d3ee]">
+                <g stroke="#22d3ee" stroke-width="2" fill="none">
+                    <path d="M 400 150 C 300 100 200 200 250 350 C 280 450 380 480 400 450" />
+                    <path d="M 400 150 C 500 100 600 200 550 350 C 520 450 420 480 400 450" />
+                    <path d="M 400 150 L 400 450 M 350 200 L 450 250 M 300 300 L 500 350 M 320 400 L 400 350 M 480 400 L 400 350 M 270 250 L 400 300 M 530 250 L 400 300" stroke-width="1.5" opacity="0.7"/>
+                    <path d="M 250 350 L 100 450 M 550 350 L 700 450 M 300 150 L 150 100 M 500 150 L 650 100 M 200 250 L 50 250 M 600 250 L 750 250" stroke-width="1" stroke-dasharray="5 5" opacity="0.5"/>
+                </g>
+                <g fill="#cffafe" filter="drop-shadow(0 0 5px #fff)">
+                    <circle cx="400" cy="150" r="8" />
+                    <circle cx="400" cy="450" r="8" />
+                    <circle cx="250" cy="350" r="6" />
+                    <circle cx="550" cy="350" r="6" />
+                    <circle cx="350" cy="200" r="5" />
+                    <circle cx="450" cy="250" r="5" />
+                    <circle cx="300" cy="300" r="5" />
+                    <circle cx="500" cy="350" r="5" />
+                    <circle cx="100" cy="450" r="10" />
+                    <circle cx="700" cy="450" r="10" />
+                    <circle cx="150" cy="100" r="10" />
+                    <circle cx="650" cy="100" r="10" />
+                    <circle cx="50" cy="250" r="10" />
+                    <circle cx="750" cy="250" r="10" />
+                </g>
+            </svg>
+        </div>
+
         <div class="flex-grow flex flex-col items-center justify-center gap-12 mt-10">
             <div class="text-center floating">
-                <h1 class="text-4xl sm:text-7xl font-black text-white mb-2 text-glow uppercase">Vui Học Máy Tính</h1>
-                <p class="text-indigo-300 tracking-widest uppercase text-sm font-bold">Chinh phục thử thách Click & Type</p>
+                <h1 class="text-4xl sm:text-7xl font-black text-white mb-2 text-glow uppercase z-10 relative">Vui Học Máy Tính</h1>
+                <p class="text-cyan-300 tracking-widest uppercase text-sm font-bold z-10 relative">Chinh phục thử thách Click & Type</p>
             </div>
             
             <div class="flex flex-col items-center gap-8 glass-card p-10 rounded-[40px] z-10 mx-4">
                 <div class="flex flex-col items-center gap-4">
                     <label for="level" class="text-white/60 uppercase text-[10px] font-bold tracking-[0.3em]">Chọn cấp độ của bạn</label>
-                    <select id="level" class="bg-indigo-600/30 text-white font-bold text-xl px-6 py-3 rounded-xl border-2 border-indigo-500/50 outline-none hover:bg-indigo-600/50 cursor-pointer">
+                    <select id="level" class="bg-cyan-900/50 text-cyan-300 font-bold text-xl px-6 py-3 rounded-xl border-2 border-cyan-500/50 outline-none hover:bg-cyan-800/50 cursor-pointer">
                         <!-- Populated by JS -->
                     </select>
                 </div>
                 
                 <div class="flex gap-6 mt-4 flex-wrap justify-center">
-                    <button class="group flex flex-col items-center gap-4 p-8 rounded-3xl bg-indigo-600/20 border-2 border-indigo-500/50 hover:bg-indigo-600/40 transition-all cursor-pointer" onclick="startGame('mouse')">
-                        <div class="w-24 h-24 rounded-full bg-indigo-500 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                    <button class="group flex flex-col items-center gap-4 p-8 rounded-3xl bg-cyan-600/20 border-2 border-cyan-500/50 hover:bg-cyan-600/40 transition-all cursor-pointer z-10" onclick="startGame('mouse')">
+                        <div class="w-24 h-24 rounded-full bg-cyan-500 flex items-center justify-center shadow-[0_0_20px_#06b6d4] group-hover:scale-110 transition-transform">
                             <svg width="48" height="48" viewBox="0 0 24 24" fill="white"><path d="M13 1.07V9h7c0-4.08-3.05-7.44-7-7.93M4 15c0 4.42 3.58 8 8 8s8-3.58 8-8v-4H4v4m7-13.93C7.05 1.56 4 4.92 4 9h7V1.07Z"/></svg>
                         </div>
                         <span class="text-xl font-bold text-white uppercase tracking-tighter">Luyện Chuột</span>
                     </button>
                     
-                    <button class="group flex flex-col items-center gap-4 p-8 rounded-3xl bg-fuchsia-600/20 border-2 border-fuchsia-500/50 hover:bg-fuchsia-600/40 transition-all cursor-pointer" onclick="startGame('keyboard')">
-                        <div class="w-24 h-24 rounded-full bg-fuchsia-500 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                    <button class="group flex flex-col items-center gap-4 p-8 rounded-3xl bg-teal-600/20 border-2 border-teal-500/50 hover:bg-teal-600/40 transition-all cursor-pointer z-10" onclick="startGame('keyboard')">
+                        <div class="w-24 h-24 rounded-full bg-teal-500 flex items-center justify-center shadow-[0_0_20px_#14b8a6] group-hover:scale-110 transition-transform">
                             <svg width="48" height="48" viewBox="0 0 24 24" fill="white"><path d="M20 5H4c-1.1 0-1.99.9-1.99 2L2 17c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2m-9 3h2v2h-2V8m0 3h2v2h-2v-2m-3-3h2v2H8V8m0 3h2v2H8v-2m-1 2H5v-2h2v2m0-3H5V8h2v2m9 7H8v-2h8v2m3-4h-2v-2h2v2m0-3h-2V8h2v2Z"/></svg>
                         </div>
                         <span class="text-xl font-bold text-white uppercase tracking-tighter">Luyện Phím</span>
@@ -144,9 +180,14 @@
                 </div>
             </div>
 
-            <button class="px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-white text-sm font-semibold border border-white/10 transition-colors cursor-pointer" onclick="exitGame()">
-                THOÁT
-            </button>
+            <div class="flex items-center gap-3">
+                <button class="sound-btn hidden sm:block px-4 py-2 rounded-lg bg-cyan-900/50 hover:bg-cyan-800 text-cyan-300 text-xs font-bold border border-cyan-500/50 transition-colors cursor-pointer" onclick="SoundSystem.toggleMusic()">
+                    🔇 Nhạc: Tắt
+                </button>
+                <button class="px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-white text-sm font-semibold border border-white/10 transition-colors cursor-pointer" onclick="exitGame()">
+                    THOÁT
+                </button>
+            </div>
         </header>
         
         <div id="playzone" class="flex-grow w-full relative overflow-hidden bg-transparent"></div>
@@ -157,7 +198,7 @@
                 <div id="bear-icon" class="flex justify-center items-center"></div>
                 <h2 id="result-title" class="text-5xl font-black text-white text-glow m-0"></h2>
                 <p id="result-desc" class="text-indigo-300 font-bold text-xl m-0"></p>
-                <button onclick="exitGame()" class="mt-6 px-8 py-4 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold border-2 border-indigo-400 shadow-lg transition-all active:scale-95 text-xl cursor-pointer">
+                <button onclick="exitGame()" class="mt-6 px-8 py-4 rounded-2xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold border-2 border-cyan-400 shadow-[0_0_15px_rgba(34,211,238,0.5)] transition-all active:scale-95 text-xl cursor-pointer">
                     CHƠI LẠI
                 </button>
             </div>
@@ -165,6 +206,107 @@
     </div>
 
     <script>
+        // --- SOUND SYSTEM (Web Audio API) ---
+        const SoundSystem = (function() {
+            let ctx = null;
+            let enabled = false;
+            let isPlaying = false;
+            let nextNoteTime = 0;
+            let timeoutId = null;
+            let noteIdx = 0;
+            const melody = [
+                261.63, 329.63, 392.00, 523.25,
+                392.00, 329.63, 349.23, 440.00,
+                523.25, 440.00, 392.00, 329.63,
+                261.63, 392.00, 261.63, 392.00
+            ];
+
+            function init() {
+                if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
+                if (ctx.state === 'suspended') ctx.resume();
+            }
+
+            function playTone(freq, type, duration, vol) {
+                if (!enabled || !ctx) return;
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, ctx.currentTime);
+                gain.gain.setValueAtTime(vol, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start();
+                osc.stop(ctx.currentTime + duration);
+            }
+
+            function playScore() { playTone(880, 'sine', 0.2, 0.1); playTone(1100, 'sine', 0.3, 0.1); }
+            function playError() { playTone(150, 'sawtooth', 0.4, 0.1); playTone(100, 'sawtooth', 0.4, 0.1); }
+            function playWin() { playTone(523, 'sine', 0.2, 0.2); setTimeout(()=>playTone(659, 'sine', 0.2, 0.2), 200); setTimeout(()=>playTone(783, 'sine', 0.4, 0.2), 400); }
+            function playLose() { playTone(300, 'sawtooth', 0.3, 0.2); setTimeout(()=>playTone(250, 'sawtooth', 0.5, 0.2), 300); }
+
+            function scheduleBGM() {
+                if (!isPlaying || !enabled) return;
+                while (nextNoteTime < ctx.currentTime + 0.1) {
+                    const freq = melody[noteIdx % melody.length];
+                    
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.value = freq;
+                    gain.gain.setValueAtTime(0.03, nextNoteTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, nextNoteTime + 0.3);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(nextNoteTime);
+                    osc.stop(nextNoteTime + 0.3);
+
+                    nextNoteTime += 0.25;
+                    noteIdx++;
+                }
+                timeoutId = setTimeout(scheduleBGM, 50);
+            }
+
+            function toggleMusic(forcePlay) {
+                init();
+                if (forcePlay && !isPlaying && enabled) {
+                    isPlaying = true;
+                    nextNoteTime = ctx.currentTime + 0.1;
+                    scheduleBGM();
+                } else if (!forcePlay) {
+                    enabled = !enabled;
+                    if (enabled) {
+                        isPlaying = true;
+                        nextNoteTime = ctx.currentTime + 0.1;
+                        scheduleBGM();
+                    } else {
+                        isPlaying = false;
+                        clearTimeout(timeoutId);
+                    }
+                    updateBtn();
+                }
+            }
+
+            function stopBGM() {
+                isPlaying = false;
+                clearTimeout(timeoutId);
+            }
+
+            function updateBtn() {
+                const btns = document.querySelectorAll('.sound-btn');
+                btns.forEach(btn => {
+                    btn.innerHTML = enabled ? '🔊 Nhạc: Bật' : '🔇 Nhạc: Tắt';
+                    if(enabled) {
+                        btn.classList.add('bg-cyan-900/80');
+                    } else {
+                        btn.classList.remove('bg-cyan-900/80');
+                    }
+                });
+            }
+
+            return { init, playScore, playError, playWin, playLose, toggleMusic, stopBGM };
+        })();
+
         // --- LEVEL CONFIGURATION ---
         // Ma trận 10 cấp độ cấu hình tĩnh
         const levelMatrix = [];
@@ -201,6 +343,8 @@
 
         // --- CORE GAME LOGIC ---
         function startGame(mode) {
+            SoundSystem.init();
+            SoundSystem.toggleMusic(true);
             currentLevel = parseInt(document.getElementById('level').value);
             score = 0;
             penalty = 0;
@@ -219,6 +363,7 @@
 
         function exitGame() {
             isPlaying = false;
+            SoundSystem.stopBGM();
             clearTimeout(spawnTimer);
             document.getElementById('game-screen').classList.remove('active');
             document.getElementById('home-screen').classList.add('active');
@@ -234,6 +379,7 @@
 
         function addPenalty() {
             if (!isPlaying) return;
+            SoundSystem.playError();
             penalty += 10;
             updateHUD();
             if (penalty >= 50) {
@@ -243,6 +389,7 @@
         
         function addScore() {
             if (!isPlaying) return;
+            SoundSystem.playScore();
             score += 10;
             // Tự động lên cấp mỗi 100 điểm
             if (score % 100 === 0 && currentLevel < 10) {
@@ -257,6 +404,7 @@
 
         function endGame(result) {
             isPlaying = false;
+            SoundSystem.stopBGM();
             clearTimeout(spawnTimer);
             document.getElementById('playzone').innerHTML = '';
             
@@ -271,11 +419,13 @@
             const sadBear = `<svg viewBox="0 0 100 100" class="w-40 h-40 drop-shadow-[0_0_20px_rgba(239,68,68,0.6)]"><circle cx="50" cy="50" r="45" fill="#9CA3AF"/><circle cx="20" cy="20" r="15" fill="#9CA3AF"/><circle cx="80" cy="20" r="15" fill="#9CA3AF"/><circle cx="20" cy="20" r="10" fill="#6B7280"/><circle cx="80" cy="20" r="10" fill="#6B7280"/><circle cx="30" cy="45" r="6" fill="#111827"/><circle cx="70" cy="45" r="6" fill="#111827"/><path d="M 35 70 Q 50 55 65 70" stroke="#111827" stroke-width="6" stroke-linecap="round" fill="none"/></svg>`;
             
             if (result === 'win') {
+                SoundSystem.playWin();
                 icon.innerHTML = happyBear;
                 title.textContent = "CHIẾN THẮNG!";
                 title.className = "text-5xl font-black text-green-400 text-glow m-0";
                 desc.textContent = "Giỏi quá! Bé đã đạt được " + score + " điểm.";
             } else {
+                SoundSystem.playLose();
                 icon.innerHTML = sadBear;
                 title.textContent = "THUA RỒI!";
                 title.className = "text-5xl font-black text-red-400 text-glow m-0";
@@ -319,9 +469,10 @@
             el.style.left = x + 'px';
             el.style.top = y + 'px';
             
-            // Màu sắc rực rỡ ngẫu nhiên
-            const colors = ['#FF1744', '#D500F9', '#00E5FF', '#76FF03', '#FFEA00', '#FF9100'];
-            el.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+            // Màu sắc rực rỡ ngẫu nhiên (chỉnh màu thông qua hue-rotate để giữ nguyên gradient gốc)
+            const hues = [0, 60, 120, 180, 240, 300];
+            const randomHue = hues[Math.floor(Math.random() * hues.length)];
+            el.style.filter = `hue-rotate(${randomHue}deg)`;
             
             // Xử lý sự kiện click
             el.onmousedown = () => {
