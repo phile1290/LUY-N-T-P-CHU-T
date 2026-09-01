@@ -17,7 +17,11 @@
             flex-direction: column; 
             overflow: hidden; 
             font-family: 'Segoe UI', Tahoma, Geneva, sans-serif; 
-            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #312e81 100%); 
+            background-color: #0f172a;
+            background-image: 
+                radial-gradient(circle at 50% 100%, rgba(99, 102, 241, 0.4) 0%, transparent 60%),
+                url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cdefs%3E%3Cpattern id='grid' width='40' height='40' patternUnits='userSpaceOnUse'%3E%3Cpath d='M 40 0 L 0 0 0 40' fill='none' stroke='rgba(255, 255, 255, 0.05)' stroke-width='1'/%3E%3C/pattern%3E%3C/defs%3E%3Crect width='100%25' height='100%25' fill='url(%23grid)'/%3E%3Ccircle cx='50' cy='50' r='2' fill='%23fff' opacity='0.8'/%3E%3Ccircle cx='150' cy='250' r='1' fill='%23fff' opacity='0.5'/%3E%3Ccircle cx='300' cy='100' r='1.5' fill='%23fff' opacity='0.6'/%3E%3Ccircle cx='250' cy='350' r='2' fill='%23fff' opacity='0.9'/%3E%3Ccircle cx='80' cy='300' r='1' fill='%23fff' opacity='0.7'/%3E%3Ccircle cx='350' cy='200' r='2' fill='%23fff' opacity='0.4'/%3E%3C/svg%3E"),
+                linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #312e81 100%);
             user-select: none; 
         }
         
@@ -131,12 +135,12 @@
 
             <div class="flex items-center gap-6 sm:gap-12">
                 <div class="flex flex-col items-center">
-                    <span class="text-[10px] text-indigo-400 uppercase tracking-widest font-bold">Điểm số</span>
-                    <span id="lbl-score" class="text-2xl text-yellow-400 font-mono leading-none">0</span>
+                    <span class="text-[10px] text-green-400 uppercase tracking-widest font-bold">Điểm / 300</span>
+                    <span id="lbl-score" class="text-2xl text-green-400 font-mono leading-none">0</span>
                 </div>
                 <div class="flex flex-col items-center">
-                    <span class="text-[10px] text-red-400 uppercase tracking-widest font-bold">Mạng</span>
-                    <span class="text-xl text-red-400 font-mono leading-none"><span id="lbl-lives">3</span> ❤️</span>
+                    <span class="text-[10px] text-red-400 uppercase tracking-widest font-bold">Điểm Trừ / 50</span>
+                    <span class="text-xl text-red-400 font-mono leading-none">-<span id="lbl-penalty">0</span></span>
                 </div>
             </div>
 
@@ -146,6 +150,18 @@
         </header>
         
         <div id="playzone" class="flex-grow w-full relative overflow-hidden bg-transparent"></div>
+        
+        <!-- RESULT MODAL -->
+        <div id="result-modal" class="hidden absolute inset-0 bg-black/80 z-[100] flex items-center justify-center backdrop-blur-sm">
+            <div class="glass-card p-12 rounded-[40px] flex flex-col items-center gap-6 max-w-md text-center transform transition-all scale-90" id="result-content">
+                <div id="bear-icon" class="flex justify-center items-center"></div>
+                <h2 id="result-title" class="text-5xl font-black text-white text-glow m-0"></h2>
+                <p id="result-desc" class="text-indigo-300 font-bold text-xl m-0"></p>
+                <button onclick="exitGame()" class="mt-6 px-8 py-4 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold border-2 border-indigo-400 shadow-lg transition-all active:scale-95 text-xl cursor-pointer">
+                    CHƠI LẠI
+                </button>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -167,7 +183,7 @@
         // --- GLOBAL VARIABLES ---
         let currentLevel = 1;
         let score = 0;
-        let lives = 3;
+        let penalty = 0;
         let activeMode = '';
         let spawnTimer = null;
         let isPlaying = false;
@@ -187,7 +203,7 @@
         function startGame(mode) {
             currentLevel = parseInt(document.getElementById('level').value);
             score = 0;
-            lives = 3;
+            penalty = 0;
             activeMode = mode;
             isPlaying = true;
             
@@ -196,6 +212,7 @@
             document.getElementById('home-screen').classList.remove('active');
             document.getElementById('game-screen').classList.add('active');
             document.getElementById('playzone').innerHTML = '';
+            document.getElementById('result-modal').classList.add('hidden');
             
             scheduleNextSpawn();
         }
@@ -205,26 +222,27 @@
             clearTimeout(spawnTimer);
             document.getElementById('game-screen').classList.remove('active');
             document.getElementById('home-screen').classList.add('active');
-            document.getElementById('playzone').innerHTML = ''; // Xóa hết mục tiêu
+            document.getElementById('playzone').innerHTML = '';
+            document.getElementById('result-modal').classList.add('hidden');
         }
 
         function updateHUD() {
             document.getElementById('lbl-level').textContent = currentLevel;
             document.getElementById('lbl-score').textContent = score;
-            document.getElementById('lbl-lives').textContent = lives;
+            document.getElementById('lbl-penalty').textContent = penalty;
         }
 
-        function loseLife() {
+        function addPenalty() {
             if (!isPlaying) return;
-            lives--;
+            penalty += 10;
             updateHUD();
-            if (lives <= 0) {
-                alert('Trò chơi kết thúc! Điểm của bé là: ' + score);
-                exitGame();
+            if (penalty >= 50) {
+                endGame('lose');
             }
         }
         
         function addScore() {
+            if (!isPlaying) return;
             score += 10;
             // Tự động lên cấp mỗi 100 điểm
             if (score % 100 === 0 && currentLevel < 10) {
@@ -232,6 +250,41 @@
                 document.getElementById('level').value = currentLevel; // Update dropdown state too
             }
             updateHUD();
+            if (score >= 300) {
+                endGame('win');
+            }
+        }
+
+        function endGame(result) {
+            isPlaying = false;
+            clearTimeout(spawnTimer);
+            document.getElementById('playzone').innerHTML = '';
+            
+            const modal = document.getElementById('result-modal');
+            const icon = document.getElementById('bear-icon');
+            const title = document.getElementById('result-title');
+            const desc = document.getElementById('result-desc');
+            
+            modal.classList.remove('hidden');
+            
+            const happyBear = `<svg viewBox="0 0 100 100" class="w-40 h-40 drop-shadow-[0_0_20px_rgba(251,191,36,0.6)]"><circle cx="50" cy="50" r="45" fill="#FBBF24"/><circle cx="20" cy="20" r="15" fill="#FBBF24"/><circle cx="80" cy="20" r="15" fill="#FBBF24"/><circle cx="20" cy="20" r="10" fill="#F59E0B"/><circle cx="80" cy="20" r="10" fill="#F59E0B"/><circle cx="30" cy="40" r="6" fill="#451A03"/><circle cx="70" cy="40" r="6" fill="#451A03"/><path d="M 35 65 Q 50 80 65 65" stroke="#451A03" stroke-width="6" stroke-linecap="round" fill="none"/></svg>`;
+            const sadBear = `<svg viewBox="0 0 100 100" class="w-40 h-40 drop-shadow-[0_0_20px_rgba(239,68,68,0.6)]"><circle cx="50" cy="50" r="45" fill="#9CA3AF"/><circle cx="20" cy="20" r="15" fill="#9CA3AF"/><circle cx="80" cy="20" r="15" fill="#9CA3AF"/><circle cx="20" cy="20" r="10" fill="#6B7280"/><circle cx="80" cy="20" r="10" fill="#6B7280"/><circle cx="30" cy="45" r="6" fill="#111827"/><circle cx="70" cy="45" r="6" fill="#111827"/><path d="M 35 70 Q 50 55 65 70" stroke="#111827" stroke-width="6" stroke-linecap="round" fill="none"/></svg>`;
+            
+            if (result === 'win') {
+                icon.innerHTML = happyBear;
+                title.textContent = "CHIẾN THẮNG!";
+                title.className = "text-5xl font-black text-green-400 text-glow m-0";
+                desc.textContent = "Giỏi quá! Bé đã đạt được " + score + " điểm.";
+            } else {
+                icon.innerHTML = sadBear;
+                title.textContent = "THUA RỒI!";
+                title.className = "text-5xl font-black text-red-400 text-glow m-0";
+                desc.textContent = "Bé bị trừ 50 điểm. Cố gắng lần sau nhé!";
+            }
+            
+            setTimeout(() => {
+                document.getElementById('result-content').classList.replace('scale-90', 'scale-100');
+            }, 10);
         }
 
         function scheduleNextSpawn() {
@@ -286,7 +339,7 @@
             setTimeout(() => {
                 if (el.parentNode && !el.classList.contains('hit')) {
                     el.remove();
-                    loseLife();
+                    addPenalty();
                 }
             }, config.spawnRate * 2.5); 
         }
@@ -327,7 +380,7 @@
             el.addEventListener('transitionend', (e) => {
                 if (e.propertyName === 'top' && el.parentNode) {
                     el.remove();
-                    loseLife();
+                    addPenalty();
                 }
             });
         }
