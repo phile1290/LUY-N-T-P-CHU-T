@@ -474,7 +474,8 @@
             el.style.filter = `hue-rotate(${randomHue}deg)`;
             
             // Xử lý sự kiện click
-            el.onmousedown = () => {
+            el.onmousedown = (e) => {
+                e.stopPropagation();
                 if (el.classList.contains('hit')) return;
                 el.classList.add('hit');
                 addScore();
@@ -535,6 +536,22 @@
             });
         }
 
+        // Lắng nghe sự kiện click sai trên vùng chơi (Luyện Chuột)
+        document.getElementById('playzone').addEventListener('mousedown', (e) => {
+            if (!isPlaying || activeMode !== 'mouse') return;
+            if (e.target.id === 'playzone') {
+                const targets = Array.from(document.querySelectorAll('.mouse-target:not(.hit)'));
+                if (targets.length > 0) {
+                    // Lấy mục tiêu (bất kỳ đang hiển thị) xóa và trừ điểm
+                    const target = targets[0];
+                    target.classList.add('hit');
+                    target.style.opacity = '0';
+                    addPenalty();
+                    setTimeout(() => { if (target.parentNode) target.remove(); }, 150);
+                }
+            }
+        });
+
         // Lắng nghe sự kiện gõ phím
         window.addEventListener('keydown', (e) => {
             if (!isPlaying || activeMode !== 'keyboard') return;
@@ -543,6 +560,7 @@
             if (/^[A-Z0-9]$/.test(key)) {
                 // Lấy tất cả mục tiêu trên màn hình chưa bị phá hủy
                 const targets = Array.from(document.querySelectorAll('.key-target:not(.hit)'));
+                if (targets.length === 0) return;
                 
                 // Tìm mục tiêu rơi thấp nhất (top lớn nhất) có ký tự khớp
                 const match = targets
@@ -557,6 +575,20 @@
                     match.classList.add('hit');
                     addScore();
                     setTimeout(() => { if (match.parentNode) match.remove(); }, 150);
+                } else {
+                    // Gõ sai -> Xóa mục tiêu thấp nhất và trừ điểm
+                    const lowestTarget = targets.sort((a, b) => {
+                        const aTop = parseFloat(a.style.top) || 0;
+                        const bTop = parseFloat(b.style.top) || 0;
+                        return bTop - aTop;
+                    })[0];
+                    
+                    if (lowestTarget) {
+                        lowestTarget.classList.add('hit'); // Ngăn tương tác tiếp
+                        lowestTarget.style.opacity = '0';  // Hiệu ứng biến mất
+                        addPenalty();
+                        setTimeout(() => { if (lowestTarget.parentNode) lowestTarget.remove(); }, 150);
+                    }
                 }
             }
         });
