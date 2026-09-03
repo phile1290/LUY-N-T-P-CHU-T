@@ -70,6 +70,7 @@
             box-shadow: 0 0 20px #0891b2;
             text-shadow: 0 0 10px #fff;
             transition: transform 0.1s, opacity 0.15s;
+            white-space: nowrap;
         }
         .hit {
             transform: scale(1.6) rotate(10deg);
@@ -191,6 +192,8 @@
         
         <div id="playzone" class="flex-grow w-full relative overflow-hidden bg-transparent"></div>
         
+        <input type="text" id="keyboard-input" class="opacity-0 absolute top-0 left-0 w-0 h-0" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+
         <!-- RESULT MODAL -->
         <div id="result-modal" class="hidden absolute inset-0 bg-black/80 z-[100] flex items-center justify-center backdrop-blur-sm">
             <div class="glass-card p-12 rounded-[40px] flex flex-col items-center gap-6 max-w-md text-center transform transition-all scale-90" id="result-content">
@@ -307,17 +310,29 @@
         })();
 
         // --- LEVEL CONFIGURATION ---
-        // Ma trận 10 cấp độ cấu hình tĩnh
+        const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789".split('');
+        const wordsNoMark = ["BAN", "GHE", "HOC", "SINH", "TRUONG", "LOP", "SACH", "BUT", "THUOC", "BOM", "KEO", "BANH", "KHOA", "TOAN", "VAN", "NAM", "NU", "XANH", "DO", "TIM", "VANG", "MAY", "TINH", "CHUOT", "PHIM"];
+        const wordsMark = ["BÀN", "GHẾ", "HỌC", "SINH", "TRƯỜNG", "LỚP", "SÁCH", "BÚT", "THƯỚC", "MÈO", "CHÓ", "BÁNH", "KẸO", "CỬA", "NHÀ", "TRẮNG", "ĐEN", "TÍM", "VÀNG", "ĐỎ", "MÁY", "TÍNH", "CHUỘT", "PHÍM"];
+        const sentences = [
+            "BÉ HỌC MÁY TÍNH", "CHĂM NGOAN HỌC GIỎI", "MỘT CON VỊT", 
+            "TRỜI NẮNG ĐẸP", "HÔM NAY ĐI HỌC", "BÀN TAY MẸ", 
+            "CÔ GIÁO NHƯ MẸ HIỀN", "TRƯỜNG HỌC THÂN THIỆN", 
+            "HỌC SINH TÍCH CỰC", "MỖI NGÀY ĐẾN TRƯỜNG", "LÀ MỘT NGÀY VUI"
+        ];
+
         const levelMatrix = [];
-        for (let i = 1; i <= 10; i++) {
+        for (let i = 1; i <= 20; i++) {
+            let type = 'char';
+            if (i >= 6 && i <= 10) type = 'word_nomark';
+            if (i >= 11 && i <= 15) type = 'word_mark';
+            if (i >= 16 && i <= 20) type = 'sentence';
+
             levelMatrix.push({
                 level: i,
-                // Giảm dần từ 4000ms (Level 1) đến 1000ms (Level 10)
-                spawnRate: Math.round(4000 - ((i - 1) * (3000 / 9))),
-                // Giảm kích thước từ 100px (Level 1) xuống 40px (Level 10)
-                targetSize: Math.round(100 - ((i - 1) * (60 / 9))),
-                // Tốc độ rơi giảm dần từ 8s (Level 1) xuống 2.5s (Level 10)
-                fallSpeed: 8 - ((i - 1) * (5.5 / 9))
+                spawnRate: Math.max(800, 2500 - (i * 85)), 
+                fallSpeed: Math.max(3, 10 - (i * 0.35)),
+                targetSize: Math.max(30, 80 - (i * 2.5)), 
+                type: type
             });
         }
 
@@ -328,10 +343,12 @@
         let activeMode = '';
         let spawnTimer = null;
         let isPlaying = false;
+        let activeKeyTarget = null;
 
         // --- INITIALIZATION ---
         window.onload = () => {
             const select = document.getElementById('level');
+            select.innerHTML = '';
             levelMatrix.forEach(config => {
                 const opt = document.createElement('option');
                 opt.value = config.level;
@@ -357,6 +374,13 @@
             document.getElementById('playzone').innerHTML = '';
             document.getElementById('result-modal').classList.add('hidden');
             
+            if (mode === 'keyboard') {
+                const input = document.getElementById('keyboard-input');
+                input.value = '';
+                input.focus();
+                activeKeyTarget = null;
+            }
+            
             scheduleNextSpawn();
         }
 
@@ -364,11 +388,19 @@
             isPlaying = false;
             SoundSystem.stopBGM();
             clearTimeout(spawnTimer);
+            document.getElementById('keyboard-input').blur();
             document.getElementById('game-screen').classList.remove('active');
             document.getElementById('home-screen').classList.add('active');
             document.getElementById('playzone').innerHTML = '';
             document.getElementById('result-modal').classList.add('hidden');
         }
+
+        // Keep focus on input if keyboard mode
+        document.addEventListener('click', () => {
+            if (isPlaying && activeMode === 'keyboard') {
+                document.getElementById('keyboard-input').focus();
+            }
+        });
 
         function updateHUD() {
             document.getElementById('lbl-level').textContent = currentLevel;
@@ -391,7 +423,7 @@
             SoundSystem.playScore();
             score += 10;
             // Tự động lên cấp mỗi 100 điểm
-            if (score % 100 === 0 && currentLevel < 10) {
+            if (score % 100 === 0 && currentLevel < 20) {
                 currentLevel++;
                 document.getElementById('level').value = currentLevel; // Update dropdown state too
             }
@@ -496,40 +528,78 @@
         }
 
         // --- KEYBOARD GAME LOGIC ---
+        function removeDiacritics(str) {
+            return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D");
+        }
+
+        function destroyTarget(target) {
+            if(target.classList.contains('hit')) return;
+            target.classList.add('hit');
+            target.style.opacity = '0';
+            addPenalty();
+            setTimeout(() => { if (target.parentNode) target.remove(); }, 150);
+        }
+
         function spawnKeyTarget(config) {
             const zone = document.getElementById('playzone');
             const el = document.createElement('div');
             el.className = 'key-target';
             
-            const size = config.targetSize;
-            const maxX = zone.clientWidth - size;
+            let text = "";
+            if (config.type === 'char') {
+                text = chars[Math.floor(Math.random() * chars.length)];
+            } else if (config.type === 'word_nomark') {
+                text = wordsNoMark[Math.floor(Math.random() * wordsNoMark.length)];
+            } else if (config.type === 'word_mark') {
+                text = wordsMark[Math.floor(Math.random() * wordsMark.length)];
+            } else {
+                text = sentences[Math.floor(Math.random() * sentences.length)];
+            }
             
-            // Tọa độ X ngẫu nhiên
-            const x = Math.max(0, Math.floor(Math.random() * maxX));
+            el.dataset.text = text;
+            el.innerHTML = `<span class="opacity-80">${text}</span>`;
             
-            // Ký tự ngẫu nhiên từ A-Z và 0-9
-            const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-            const char = chars[Math.floor(Math.random() * chars.length)];
+            if (text.length > 1) {
+                el.style.padding = '8px 24px';
+                el.style.borderRadius = '24px';
+                el.style.width = 'max-content';
+                el.style.height = 'auto';
+                el.style.fontSize = Math.max(16, config.targetSize * 0.5) + 'px';
+            } else {
+                el.style.width = config.targetSize + 'px';
+                el.style.height = config.targetSize + 'px';
+                el.style.borderRadius = '12px';
+                el.style.fontSize = Math.max(20, config.targetSize * 0.6) + 'px';
+            }
             
-            el.textContent = char;
-            el.style.width = size + 'px';
-            el.style.height = size + 'px';
-            el.style.left = x + 'px';
-            el.style.top = '-' + size + 'px'; // Bắt đầu ở trên cùng ngoài màn hình
-            el.style.fontSize = Math.max(20, size * 0.6) + 'px'; // Kích thước chữ tỷ lệ với khối
+            // Màu sắc rực rỡ ngẫu nhiên
+            const hues = [0, 60, 120, 180, 240, 300];
+            const randomHue = hues[Math.floor(Math.random() * hues.length)];
+            el.style.filter = `hue-rotate(${randomHue}deg)`;
             
             zone.appendChild(el);
             
-            // Ép trình duyệt tính toán lại Layout để kích hoạt Transition
+            // Ép trình duyệt tính toán Layout để lấy kích thước thật
+            const width = el.offsetWidth;
+            const maxX = zone.clientWidth - width;
+            const x = Math.max(0, Math.floor(Math.random() * maxX));
+            
+            el.style.left = x + 'px';
+            el.style.top = '-' + (el.offsetHeight + 10) + 'px'; 
+            
+            // Ép trình duyệt tính toán lại Layout
             void el.offsetWidth;
             
             // Thiết lập Animation rơi
             el.style.transition = `top ${config.fallSpeed}s linear`;
-            el.style.top = zone.clientHeight + 'px'; // Rơi xuống đáy Playzone
+            el.style.top = zone.clientHeight + 'px'; 
             
-            // Kiểm tra khi rơi chạm đáy màn hình
             el.addEventListener('transitionend', (e) => {
                 if (e.propertyName === 'top' && el.parentNode) {
+                    if (activeKeyTarget === el) {
+                        activeKeyTarget = null;
+                        document.getElementById('keyboard-input').value = '';
+                    }
                     el.remove();
                     addPenalty();
                 }
@@ -552,44 +622,68 @@
             }
         });
 
-        // Lắng nghe sự kiện gõ phím
-        window.addEventListener('keydown', (e) => {
+        // Lắng nghe sự kiện gõ phím thông qua input ẩn
+        document.getElementById('keyboard-input').addEventListener('input', (e) => {
             if (!isPlaying || activeMode !== 'keyboard') return;
+            const inputEl = e.target;
+            const val = inputEl.value.toUpperCase();
             
-            const key = e.key.toUpperCase();
-            if (/^[A-Z0-9]$/.test(key)) {
-                // Lấy tất cả mục tiêu trên màn hình chưa bị phá hủy
-                const targets = Array.from(document.querySelectorAll('.key-target:not(.hit)'));
-                if (targets.length === 0) return;
-                
-                // Tìm mục tiêu rơi thấp nhất (top lớn nhất) có ký tự khớp
-                const match = targets
-                    .filter(t => t.textContent === key)
-                    .sort((a, b) => {
-                        const aTop = parseFloat(a.style.top) || 0;
-                        const bTop = parseFloat(b.style.top) || 0;
-                        return bTop - aTop;
-                    })[0];
+            if (!val) {
+                activeKeyTarget = null;
+                // Re-render tất cả target để xóa highlight nếu người dùng xóa sạch input
+                document.querySelectorAll('.key-target:not(.hit)').forEach(t => {
+                    t.innerHTML = `<span class="opacity-80">${t.dataset.text}</span>`;
+                });
+                return;
+            }
+
+            const valBase = removeDiacritics(val);
+            const targets = Array.from(document.querySelectorAll('.key-target:not(.hit)'));
+
+            if (targets.length === 0) {
+                inputEl.value = '';
+                return;
+            }
+
+            // Nếu chưa có mục tiêu nào đang khóa, tìm mục tiêu thấp nhất có tiền tố khớp
+            if (!activeKeyTarget || !activeKeyTarget.parentNode || activeKeyTarget.classList.contains('hit')) {
+                activeKeyTarget = targets
+                    .filter(t => removeDiacritics(t.dataset.text).startsWith(valBase))
+                    .sort((a, b) => (parseFloat(b.style.top) || 0) - (parseFloat(a.style.top) || 0))[0];
+            }
+
+            if (activeKeyTarget) {
+                const targetBase = removeDiacritics(activeKeyTarget.dataset.text);
+                if (targetBase.startsWith(valBase)) {
+                    // Cập nhật giao diện (highlight phần đã gõ)
+                    const originalText = activeKeyTarget.dataset.text;
+                    const typedPart = originalText.substring(0, val.length);
+                    const untypedPart = originalText.substring(val.length);
                     
-                if (match) {
-                    match.classList.add('hit');
-                    addScore();
-                    setTimeout(() => { if (match.parentNode) match.remove(); }, 150);
-                } else {
-                    // Gõ sai -> Xóa mục tiêu thấp nhất và trừ điểm
-                    const lowestTarget = targets.sort((a, b) => {
-                        const aTop = parseFloat(a.style.top) || 0;
-                        const bTop = parseFloat(b.style.top) || 0;
-                        return bTop - aTop;
-                    })[0];
+                    activeKeyTarget.innerHTML = `<span class="text-white drop-shadow-[0_0_10px_#fff]">${typedPart}</span><span class="opacity-40">${untypedPart}</span>`;
                     
-                    if (lowestTarget) {
-                        lowestTarget.classList.add('hit'); // Ngăn tương tác tiếp
-                        lowestTarget.style.opacity = '0';  // Hiệu ứng biến mất
-                        addPenalty();
-                        setTimeout(() => { if (lowestTarget.parentNode) lowestTarget.remove(); }, 150);
+                    // Nếu gõ chính xác toàn bộ chữ/từ (bao gồm cả dấu)
+                    if (val === originalText) {
+                        activeKeyTarget.classList.add('hit');
+                        addScore();
+                        const toRemove = activeKeyTarget;
+                        setTimeout(() => { if (toRemove.parentNode) toRemove.remove(); }, 150);
+                        inputEl.value = '';
+                        activeKeyTarget = null;
                     }
+                } else {
+                    // Gõ sai -> Hủy mục tiêu đang khóa
+                    destroyTarget(activeKeyTarget);
+                    inputEl.value = '';
+                    activeKeyTarget = null;
                 }
+            } else {
+                // Gõ sai (không khớp bất kỳ từ nào) -> Hủy mục tiêu rơi thấp nhất
+                const lowestTarget = targets.sort((a, b) => (parseFloat(b.style.top) || 0) - (parseFloat(a.style.top) || 0))[0];
+                if (lowestTarget) {
+                    destroyTarget(lowestTarget);
+                }
+                inputEl.value = '';
             }
         });
     </script>
