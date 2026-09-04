@@ -316,13 +316,10 @@
         })();
 
         // --- LEVEL CONFIGURATION ---
-        const ALL_CHARS = [
+        const CHARS_ALPHANUM = [
             "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M",
             "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z",
-            "0", "1", "2", "3", "4", "5", "6", "7", "8", "9",
-            "!", "@", "#", "$", "%", "^", "&", "*", "(", ")",
-            "-", "=", "[", "]", "\\", ";", "'", ",", ".", "/", "`",
-            "_", "+", "{", "}", "|", ":", "\"", "<", ">", "?", "~"
+            "0", "1", "2", "3", "4", "5", "6", "7", "8", "9"
         ];
 
         // MA TRẬN 10 CẤP ĐỘ VỚI ĐỘ KHÓ VÀ TỐC ĐỘ ĐƯỢC CÂN CHỈNH HOÀN HẢO
@@ -620,7 +617,7 @@
             const el = document.createElement('div');
             el.className = 'key-target';
             
-            const text = ALL_CHARS[Math.floor(Math.random() * ALL_CHARS.length)];
+            const text = CHARS_ALPHANUM[Math.floor(Math.random() * CHARS_ALPHANUM.length)];
             
             el.dataset.text = text;
             el.innerHTML = `<span class="opacity-80 whitespace-pre">${escapeHtml(text)}</span>`;
