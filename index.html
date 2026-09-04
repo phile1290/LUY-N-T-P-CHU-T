@@ -3,8 +3,10 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vui Học Máy Tính - Lớp 1</title>
-    <meta name="description" content="Ứng dụng rèn luyện kỹ năng sử dụng chuột và bàn phím cho học sinh tiểu học." />
+    <title>Bé Học Máy Tính</title>
+    <meta property="og:title" content="Bé Học Máy Tính" />
+    <meta name="description" content="Ứng dụng rèn luyện kỹ năng sử dụng chuột và bàn phím cho học sinh lớp 1." />
+    <meta property="og:description" content="Ứng dụng rèn luyện kỹ năng sử dụng chuột và bàn phím cho học sinh lớp 1." />
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
     <style>
@@ -164,9 +166,13 @@
                 </div>
                 <div class="h-8 w-[1px] bg-white/20 hidden sm:block"></div>
                 <div class="flex flex-col">
-                    <span class="text-[10px] text-indigo-400 uppercase tracking-widest font-bold">Cấp độ</span>
-                    <span id="lbl-level" class="text-xl text-white font-mono leading-none">1</span>
+                    <span class="text-[10px] text-cyan-400 uppercase tracking-widest font-bold">Cấp độ</span>
+                    <div class="flex items-center gap-2">
+                        <span id="lbl-level" class="text-xl text-white font-mono leading-none font-bold">1/10</span>
+                        <span id="lbl-level-name" class="text-xs text-cyan-300 font-medium hidden md:inline"></span>
+                    </div>
                 </div>
+                <span id="lbl-mode-badge" class="px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider hidden sm:inline-block"></span>
             </div>
 
             <div class="flex items-center gap-6 sm:gap-12">
@@ -310,29 +316,26 @@
         })();
 
         // --- LEVEL CONFIGURATION ---
-        const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789".split('');
-        const wordsNoMark = ["BAN", "GHE", "HOC", "SINH", "TRUONG", "LOP", "SACH", "BUT", "THUOC", "BOM", "KEO", "BANH", "KHOA", "TOAN", "VAN", "NAM", "NU", "XANH", "DO", "TIM", "VANG", "MAY", "TINH", "CHUOT", "PHIM"];
-        const wordsMark = ["BÀN", "GHẾ", "HỌC", "SINH", "TRƯỜNG", "LỚP", "SÁCH", "BÚT", "THƯỚC", "MÈO", "CHÓ", "BÁNH", "KẸO", "CỬA", "NHÀ", "TRẮNG", "ĐEN", "TÍM", "VÀNG", "ĐỎ", "MÁY", "TÍNH", "CHUỘT", "PHÍM"];
-        const sentences = [
-            "BÉ HỌC MÁY TÍNH", "CHĂM NGOAN HỌC GIỎI", "MỘT CON VỊT", 
-            "TRỜI NẮNG ĐẸP", "HÔM NAY ĐI HỌC", "BÀN TAY MẸ", 
-            "CÔ GIÁO NHƯ MẸ HIỀN", "TRƯỜNG HỌC THÂN THIỆN", 
-            "HỌC SINH TÍCH CỰC", "MỖI NGÀY ĐẾN TRƯỜNG", "LÀ MỘT NGÀY VUI"
+        const ALL_CHARS = [
+            "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M",
+            "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z",
+            "0", "1", "2", "3", "4", "5", "6", "7", "8", "9",
+            "!", "@", "#", "$", "%", "^", "&", "*", "(", ")",
+            "-", "=", "[", "]", "\\", ";", "'", ",", ".", "/", "`",
+            "_", "+", "{", "}", "|", ":", "\"", "<", ">", "?", "~"
         ];
 
+        // MA TRẬN 10 CẤP ĐỘ VỚI ĐỘ KHÓ VÀ TỐC ĐỘ ĐƯỢC CÂN CHỈNH HOÀN HẢO
         const levelMatrix = [];
-        for (let i = 1; i <= 20; i++) {
-            let type = 'char';
-            if (i >= 6 && i <= 10) type = 'word_nomark';
-            if (i >= 11 && i <= 15) type = 'word_mark';
-            if (i >= 16 && i <= 20) type = 'sentence';
-
+        for (let i = 1; i <= 10; i++) {
             levelMatrix.push({
                 level: i,
-                spawnRate: Math.max(800, 2500 - (i * 85)), 
-                fallSpeed: Math.max(3, 10 - (i * 0.35)),
-                targetSize: Math.max(30, 80 - (i * 2.5)), 
-                type: type
+                mouseTargetSize: Math.max(30, 85 - (i * 5.5)),
+                mouseSpawnRate: Math.max(750, 2200 - (i * 145)),
+                mouseTimeout: Math.max(1100, 4500 - (i * 340)),
+                keyTargetSize: Math.max(46, 76 - (i * 3)),
+                keyFallSpeed: Math.max(8.0, 13.0 - (i * 0.5)),
+                keySpawnRate: Math.max(2000, 3000 - (i * 100))
             });
         }
 
@@ -345,6 +348,17 @@
         let isPlaying = false;
         let activeKeyTarget = null;
 
+        // --- SAFE HTML ESCAPE UTILITY ---
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
         // --- INITIALIZATION ---
         window.onload = () => {
             const select = document.getElementById('level');
@@ -352,7 +366,7 @@
             levelMatrix.forEach(config => {
                 const opt = document.createElement('option');
                 opt.value = config.level;
-                opt.textContent = 'Cấp độ ' + config.level;
+                opt.textContent = `Cấp độ ${config.level}`;
                 select.appendChild(opt);
             });
         };
@@ -361,7 +375,7 @@
         function startGame(mode) {
             SoundSystem.init();
             SoundSystem.playBGM();
-            currentLevel = parseInt(document.getElementById('level').value);
+            currentLevel = parseInt(document.getElementById('level').value) || 1;
             score = 0;
             penalty = 0;
             activeMode = mode;
@@ -395,15 +409,48 @@
             document.getElementById('result-modal').classList.add('hidden');
         }
 
-        // Keep focus on input if keyboard mode
+        // Đảm bảo con trỏ luôn nằm trong ô input khi ở chế độ luyện phím
         document.addEventListener('click', () => {
             if (isPlaying && activeMode === 'keyboard') {
                 document.getElementById('keyboard-input').focus();
             }
         });
 
+        document.addEventListener('touchstart', (e) => {
+            if (isPlaying && activeMode === 'keyboard' && e.target.id !== 'exit-btn') {
+                document.getElementById('keyboard-input').focus();
+            }
+        });
+
+        window.addEventListener('keydown', (e) => {
+            if (isPlaying && activeMode === 'keyboard') {
+                const input = document.getElementById('keyboard-input');
+                if (document.activeElement !== input) {
+                    input.focus();
+                }
+            }
+        });
+
         function updateHUD() {
-            document.getElementById('lbl-level').textContent = currentLevel;
+            const config = levelMatrix[currentLevel - 1];
+            document.getElementById('lbl-level').textContent = `${currentLevel}/10`;
+            
+            const nameEl = document.getElementById('lbl-level-name');
+            if (nameEl) {
+                nameEl.textContent = '';
+            }
+
+            const badgeEl = document.getElementById('lbl-mode-badge');
+            if (badgeEl) {
+                if (activeMode === 'mouse') {
+                    badgeEl.textContent = 'Luyện Chuột';
+                    badgeEl.className = 'px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 hidden sm:inline-block';
+                } else {
+                    badgeEl.textContent = 'Luyện Phím';
+                    badgeEl.className = 'px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-teal-500/20 text-teal-300 border border-teal-500/40 hidden sm:inline-block';
+                }
+            }
+
             document.getElementById('lbl-score').textContent = score;
             document.getElementById('lbl-penalty').textContent = penalty;
         }
@@ -422,10 +469,10 @@
             if (!isPlaying) return;
             SoundSystem.playScore();
             score += 10;
-            // Tự động lên cấp mỗi 100 điểm
-            if (score % 100 === 0 && currentLevel < 20) {
+            // Tự động lên cấp mỗi 100 điểm nếu chưa đạt cấp 10
+            if (score % 100 === 0 && currentLevel < 10) {
                 currentLevel++;
-                document.getElementById('level').value = currentLevel; // Update dropdown state too
+                document.getElementById('level').value = currentLevel;
             }
             updateHUD();
             if (score >= 300) {
@@ -472,13 +519,17 @@
             if (!isPlaying) return;
             const config = levelMatrix[currentLevel - 1];
             
+            const currentSpawnRate = activeMode === 'mouse' 
+                ? config.mouseSpawnRate 
+                : config.keySpawnRate;
+            
             if (activeMode === 'mouse') {
                 spawnMouseTarget(config);
             } else {
                 spawnKeyTarget(config);
             }
             
-            spawnTimer = setTimeout(scheduleNextSpawn, config.spawnRate);
+            spawnTimer = setTimeout(scheduleNextSpawn, currentSpawnRate);
         }
 
         // --- MOUSE GAME LOGIC ---
@@ -487,49 +538,73 @@
             const el = document.createElement('div');
             el.className = 'mouse-target';
             
-            const size = config.targetSize;
-            const maxX = zone.clientWidth - size;
-            const maxY = zone.clientHeight - size;
+            const size = config.mouseTargetSize;
+            const maxX = Math.max(10, zone.clientWidth - size - 20);
+            const maxY = Math.max(10, zone.clientHeight - size - 20);
             
             // Tọa độ (x,y) ngẫu nhiên
-            const x = Math.max(0, Math.floor(Math.random() * maxX));
-            const y = Math.max(0, Math.floor(Math.random() * maxY));
+            const x = Math.max(10, Math.floor(Math.random() * maxX) + 10);
+            const y = Math.max(10, Math.floor(Math.random() * maxY) + 10);
             
             el.style.width = size + 'px';
             el.style.height = size + 'px';
             el.style.left = x + 'px';
             el.style.top = y + 'px';
             
-            // Màu sắc rực rỡ ngẫu nhiên (chỉnh màu thông qua hue-rotate để giữ nguyên gradient gốc)
-            const hues = [0, 60, 120, 180, 240, 300];
+            // Màu sắc rực rỡ ngẫu nhiên
+            const hues = [0, 45, 90, 140, 190, 240, 290, 330];
             const randomHue = hues[Math.floor(Math.random() * hues.length)];
             el.style.filter = `hue-rotate(${randomHue}deg)`;
             
-            // Xử lý sự kiện click
-            el.onmousedown = (e) => {
+            // Xử lý sự kiện click & touch
+            const hitTarget = (e) => {
+                if (e.cancelable) e.preventDefault();
                 e.stopPropagation();
                 if (el.classList.contains('hit')) return;
                 el.classList.add('hit');
                 addScore();
                 
                 // Gỡ bỏ element sau khi chạy xong animation
-                setTimeout(() => { if (el.parentNode) el.remove(); }, 200);
+                setTimeout(() => { if (el.parentNode) el.remove(); }, 180);
             };
+            
+            el.addEventListener('mousedown', hitTarget);
+            el.addEventListener('touchstart', hitTarget, { passive: false });
             
             zone.appendChild(el);
             
-            // Tự động biến mất và trừ mạng nếu không click kịp
+            // Tự động biến mất và trừ điểm nếu không click kịp (thời gian giảm dần theo cấp độ)
             setTimeout(() => {
                 if (el.parentNode && !el.classList.contains('hit')) {
                     el.remove();
                     addPenalty();
                 }
-            }, config.spawnRate * 2.5); 
+            }, config.mouseTimeout); 
         }
 
         // --- KEYBOARD GAME LOGIC ---
         function removeDiacritics(str) {
+            if (!str) return '';
             return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D");
+        }
+
+        function evaluateMatch(typed, targetText) {
+            let typedBase = removeDiacritics(typed).toUpperCase();
+            let targetBase = removeDiacritics(targetText).toUpperCase();
+            
+            let i = 0, j = 0; 
+            const TELEX = ['S','F','R','X','J','W','A','E','O','D'];
+            
+            while (j < typedBase.length) {
+                if (i < targetBase.length && targetBase[i] === typedBase[j]) {
+                    i++; j++;
+                } else if (TELEX.includes(typedBase[j])) {
+                    j++;
+                } else {
+                    return { isValid: false, matchedTargetLen: 0, isWin: false };
+                }
+            }
+            return { isValid: true, matchedTargetLen: i, isWin: (typedBase === targetBase) };
         }
 
         function destroyTarget(target) {
@@ -545,35 +620,18 @@
             const el = document.createElement('div');
             el.className = 'key-target';
             
-            let text = "";
-            if (config.type === 'char') {
-                text = chars[Math.floor(Math.random() * chars.length)];
-            } else if (config.type === 'word_nomark') {
-                text = wordsNoMark[Math.floor(Math.random() * wordsNoMark.length)];
-            } else if (config.type === 'word_mark') {
-                text = wordsMark[Math.floor(Math.random() * wordsMark.length)];
-            } else {
-                text = sentences[Math.floor(Math.random() * sentences.length)];
-            }
+            const text = ALL_CHARS[Math.floor(Math.random() * ALL_CHARS.length)];
             
             el.dataset.text = text;
-            el.innerHTML = `<span class="opacity-80">${text}</span>`;
+            el.innerHTML = `<span class="opacity-80 whitespace-pre">${escapeHtml(text)}</span>`;
             
-            if (text.length > 1) {
-                el.style.padding = '8px 24px';
-                el.style.borderRadius = '24px';
-                el.style.width = 'max-content';
-                el.style.height = 'auto';
-                el.style.fontSize = Math.max(16, config.targetSize * 0.5) + 'px';
-            } else {
-                el.style.width = config.targetSize + 'px';
-                el.style.height = config.targetSize + 'px';
-                el.style.borderRadius = '12px';
-                el.style.fontSize = Math.max(20, config.targetSize * 0.6) + 'px';
-            }
+            el.style.width = config.keyTargetSize + 'px';
+            el.style.height = config.keyTargetSize + 'px';
+            el.style.borderRadius = '14px';
+            el.style.fontSize = Math.max(22, config.keyTargetSize * 0.55) + 'px';
             
             // Màu sắc rực rỡ ngẫu nhiên
-            const hues = [0, 60, 120, 180, 240, 300];
+            const hues = [0, 50, 100, 160, 210, 260, 310];
             const randomHue = hues[Math.floor(Math.random() * hues.length)];
             el.style.filter = `hue-rotate(${randomHue}deg)`;
             
@@ -581,8 +639,8 @@
             
             // Ép trình duyệt tính toán Layout để lấy kích thước thật
             const width = el.offsetWidth;
-            const maxX = zone.clientWidth - width;
-            const x = Math.max(0, Math.floor(Math.random() * maxX));
+            const maxX = Math.max(0, zone.clientWidth - width - 20);
+            const x = Math.max(10, Math.floor(Math.random() * maxX) + 10);
             
             el.style.left = x + 'px';
             el.style.top = '-' + (el.offsetHeight + 10) + 'px'; 
@@ -590,8 +648,8 @@
             // Ép trình duyệt tính toán lại Layout
             void el.offsetWidth;
             
-            // Thiết lập Animation rơi
-            el.style.transition = `top ${config.fallSpeed}s linear`;
+            // Thiết lập Animation rơi với tốc độ quy định của cấp độ
+            el.style.transition = `top ${config.keyFallSpeed}s linear`;
             el.style.top = zone.clientHeight + 'px'; 
             
             el.addEventListener('transitionend', (e) => {
@@ -612,7 +670,6 @@
             if (e.target.id === 'playzone') {
                 const targets = Array.from(document.querySelectorAll('.mouse-target:not(.hit)'));
                 if (targets.length > 0) {
-                    // Lấy mục tiêu (bất kỳ đang hiển thị) xóa và trừ điểm
                     const target = targets[0];
                     target.classList.add('hit');
                     target.style.opacity = '0';
@@ -626,44 +683,53 @@
         document.getElementById('keyboard-input').addEventListener('input', (e) => {
             if (!isPlaying || activeMode !== 'keyboard') return;
             const inputEl = e.target;
-            const val = inputEl.value.toUpperCase();
+            const val = inputEl.value; 
+            const valUpper = val.toUpperCase();
             
             if (!val) {
                 activeKeyTarget = null;
-                // Re-render tất cả target để xóa highlight nếu người dùng xóa sạch input
                 document.querySelectorAll('.key-target:not(.hit)').forEach(t => {
-                    t.innerHTML = `<span class="opacity-80">${t.dataset.text}</span>`;
+                    t.innerHTML = `<span class="opacity-80 whitespace-pre">${escapeHtml(t.dataset.text)}</span>`;
                 });
                 return;
             }
 
-            const valBase = removeDiacritics(val);
             const targets = Array.from(document.querySelectorAll('.key-target:not(.hit)'));
-
             if (targets.length === 0) {
                 inputEl.value = '';
                 return;
             }
 
-            // Nếu chưa có mục tiêu nào đang khóa, tìm mục tiêu thấp nhất có tiền tố khớp
+            // Nếu chưa khóa mục tiêu hoặc mục tiêu trước đó đã bị tiêu diệt
             if (!activeKeyTarget || !activeKeyTarget.parentNode || activeKeyTarget.classList.contains('hit')) {
                 activeKeyTarget = targets
-                    .filter(t => removeDiacritics(t.dataset.text).startsWith(valBase))
+                    .filter(t => evaluateMatch(valUpper, t.dataset.text).isValid)
                     .sort((a, b) => (parseFloat(b.style.top) || 0) - (parseFloat(a.style.top) || 0))[0];
+            } else {
+                // Kiểm tra mục tiêu đang nhắm: nếu người dùng chuyển hướng gõ sang một mục tiêu hợp lệ khác
+                const checkCurrent = evaluateMatch(valUpper, activeKeyTarget.dataset.text);
+                if (!checkCurrent.isValid) {
+                    const altTarget = targets
+                        .filter(t => t !== activeKeyTarget && evaluateMatch(valUpper, t.dataset.text).isValid)
+                        .sort((a, b) => (parseFloat(b.style.top) || 0) - (parseFloat(a.style.top) || 0))[0];
+                    if (altTarget) {
+                        activeKeyTarget.innerHTML = `<span class="opacity-80 whitespace-pre">${escapeHtml(activeKeyTarget.dataset.text)}</span>`;
+                        activeKeyTarget = altTarget;
+                    }
+                }
             }
 
             if (activeKeyTarget) {
-                const targetBase = removeDiacritics(activeKeyTarget.dataset.text);
-                if (targetBase.startsWith(valBase)) {
-                    // Cập nhật giao diện (highlight phần đã gõ)
-                    const originalText = activeKeyTarget.dataset.text;
-                    const typedPart = originalText.substring(0, val.length);
-                    const untypedPart = originalText.substring(val.length);
+                const originalText = activeKeyTarget.dataset.text;
+                let result = evaluateMatch(valUpper, originalText);
+                
+                if (result.isValid) {
+                    const typedPart = escapeHtml(originalText.substring(0, result.matchedTargetLen));
+                    const untypedPart = escapeHtml(originalText.substring(result.matchedTargetLen));
                     
-                    activeKeyTarget.innerHTML = `<span class="text-white drop-shadow-[0_0_10px_#fff]">${typedPart}</span><span class="opacity-40">${untypedPart}</span>`;
+                    activeKeyTarget.innerHTML = `<span class="text-white drop-shadow-[0_0_10px_#fff] whitespace-pre font-black">${typedPart}</span><span class="opacity-40 whitespace-pre">${untypedPart}</span>`;
                     
-                    // Nếu gõ chính xác toàn bộ chữ/từ (bao gồm cả dấu)
-                    if (val === originalText) {
+                    if (result.isWin) {
                         activeKeyTarget.classList.add('hit');
                         addScore();
                         const toRemove = activeKeyTarget;
@@ -672,13 +738,12 @@
                         activeKeyTarget = null;
                     }
                 } else {
-                    // Gõ sai -> Hủy mục tiêu đang khóa
                     destroyTarget(activeKeyTarget);
                     inputEl.value = '';
                     activeKeyTarget = null;
                 }
             } else {
-                // Gõ sai (không khớp bất kỳ từ nào) -> Hủy mục tiêu rơi thấp nhất
+                // Gõ sai không khớp với bất kỳ mục tiêu nào trên màn hình
                 const lowestTarget = targets.sort((a, b) => (parseFloat(b.style.top) || 0) - (parseFloat(a.style.top) || 0))[0];
                 if (lowestTarget) {
                     destroyTarget(lowestTarget);
